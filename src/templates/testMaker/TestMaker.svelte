@@ -1,22 +1,21 @@
 <script>
+  import { onMount } from 'svelte';
+  import { Collection } from "sveltefire";
+  import TextInput from "../molecules/TextInput.svelte";
+  import RadioInput from "../molecules/RadioInput.svelte";
+  import SelectInput from "../molecules/SelectInput.svelte";
+
   let name = ''
   let description = ''
   let answerType = 0
-
-  let personalityAspects = [{
-    name: ''
-  }]
-
-  let questions = [{
-    inquiry: ''
-  }]
+  let personalityAspects = []
+  let questions = []
 
   let addPersonalityAspect = idx => () => {
     if (!personalityAspects[idx + 1]) {
       personalityAspects = [
         ...personalityAspects,
         {
-          key: '',
           name: ''
         }
       ]
@@ -28,10 +27,25 @@
       questions = [
         ...questions,
         {
-          inquiry: ''
+          inquiry: '',
+          reversed: false,
+          aspect: personalityAspects[personalityAspects.length - 1].name
         }
       ]
     }
+  }
+
+
+  onMount(() => {
+    addPersonalityAspect(-1)()
+    addQuestion(-1)()
+  })
+
+  const aspectsToOptions = aspects => {
+    return aspects.map(aspect => ({
+      value: aspect.name,
+      display: aspect.name,
+    }))
   }
 </script>
 
@@ -48,10 +62,6 @@
         margin-left: -8px;
     }
 
-    .fw {
-        width: 100% !important;
-    }
-
     .mx2 {
         margin-bottom: 32px;
         margin-top: 32px;
@@ -60,61 +70,64 @@
 
 <h1>Personality Test Maker</h1>
 
-<form>
 
-  <h2>Personality Framework</h2>
-  <div class="mx2">
-    <p>
-      <label for="name">Name</label>
-      <input bind:value={name} class="fw" id="name">
-    </p>
+<h2>Personality Framework</h2>
+<div class="mx2">
+  <TextInput bind:value={name} display="Name" id="name"/>
+  <TextInput bind:value={description} display="Description" id="description"/>
+</div>
 
-    <p>
-      <label for="description">Description</label>
-      <input bind:value={description} class="fw" id="description">
-    </p>
-  </div>
+<div class="mx2">
+  <h3>Answer type</h3>
+  <RadioInput bind:group={answerType} display="How much does it apply? (5 steps)" id="applies5"/>
+  <RadioInput bind:group={answerType} display="How much does it apply? (3 steps)" id="applies3"/>
+</div>
 
-  <div class="mx2">
-    <h3>Personality Aspects</h3>
-    {#each personalityAspects as aspect, idx (idx)}
-      <p>
-        <label for="aspect-{idx}">Aspect {idx + 1}</label>
-        <input id="aspect-{idx}" class="fw" bind:value={aspect.name} on:input={addPersonalityAspect(idx)}>
-      </p>
-    {/each}
-  </div>
+<h2>Test Maker</h2>
+<div class="mx2">
+  <h3>Personality Aspects</h3>
+  {#each personalityAspects as aspect, idx (idx)}
+    <TextInput id="aspect-{idx}" display="Aspect {idx + 1}" bind:value={aspect.name}
+               onInput={addPersonalityAspect(idx)}/>
+  {/each}
+</div>
 
-  <h2>Test Maker</h2>
-  <div class="mx2">
-    <h3>Answer type</h3>
-    <p>
-      <input bind:group={answerType} id="applies5" type="radio" value="applies5">
-      <label for="applies5">[Does not apply to me] ... [Applies to me] (5 steps)</label>
-    </p>
+<div class="mx2">
+  <h3>Questions</h3>
+  {#each questions as question, idx (idx)}
+    <div style="padding: 16px">
 
-    <p>
-      <input bind:group={answerType} id="applies3" type="radio" value="applies3">
-      <label for="applies3">[Does not apply to me] ... [Applies to me] (3 steps)</label>
-    </p>
-  </div>
+      <TextInput id="inquiry-{idx}" display="Inquiry {idx + 1}" bind:value={question.inquiry}
+                 onInput={addQuestion(idx)}/>
 
-  <div class="mx2">
-    <h2>Questions</h2>
-    {#each questions as question, idx (idx)}
-      <p>
-        <label for="inquiry-{idx}">Inquiry {idx + 1}</label>
-        <input id="inquiry-{idx}" class="fw" bind:value={question.inquiry} on:input={addQuestion(idx)}>
-      </p>
-    {/each}
-  </div>
+      <div class="pure-g">
+        <SelectInput className="pure-u-15-24"
+                     options={aspectsToOptions(personalityAspects)}
+                     bind:value={question.aspect}
+                     id="inquiry-aspect-{idx}"
+                     display="Personality aspect"/>
 
-</form>
+        <p class="pure-u-1-3" style="padding-top: 36px; padding-left: 16px;">
+          <input id="inquiry-reversed-{idx}" type="checkbox" bind:checked={question.reversed}>
+          <label for="inquiry-reversed-{idx}" style="margin-top: -8px">Reversed</label>
+        </p>
+      </div>
+    </div>
+  {/each}
+</div>
 
-<hr/>
+<Collection let:ref={ref} path={'personality_tests'}>
+  <button on:click={() => {
+    ref.add({
+      name,
+      description,
+      answerType,
+      personalityAspects,
+      questions
+    })
+  }}>
+    Save
+  </button>
+  <progress slot="loading"></progress>
+</Collection>
 
-<h1>{name}</h1>
-<h2>{description}</h2>
-{#each questions as question, idx (idx)}
-  <h3>{idx + 1}. {question.inquiry}</h3>
-{/each}

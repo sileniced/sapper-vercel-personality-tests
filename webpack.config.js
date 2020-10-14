@@ -9,6 +9,7 @@ const dev = mode === 'development';
 const alias = { svelte: path.resolve('node_modules', 'svelte') };
 const extensions = ['.mjs', '.js', '.json', '.svelte', '.html'];
 const mainFields = ['svelte', 'module', 'browser', 'main'];
+const mainFieldsServer = ['main', 'svelte', 'module', 'browser']
 
 module.exports = {
   client: {
@@ -46,7 +47,7 @@ module.exports = {
     entry: config.server.entry(),
     output: config.server.output(),
     target: 'node',
-    resolve: { alias, extensions, mainFields },
+    resolve: { alias, extensions, mainFields: mainFieldsServer },
     externals: Object.keys(pkg.dependencies).concat('encoding'),
     module: {
       rules: [
