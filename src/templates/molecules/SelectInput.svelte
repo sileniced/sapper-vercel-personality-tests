@@ -1,9 +1,14 @@
 <script>
-  export let className = ''
+  import slugify from "slugify";
+
   export let id
   export let display
   export let value
   export let options = []
+
+  if (!id) {
+    id = slugify(display)
+  }
 </script>
 
 <style>
@@ -12,13 +17,11 @@
     }
 </style>
 
-<p class={className}>
-  <label for={id}>{display}</label>
-  <select id={id} class="fw" bind:value={value}>
-    {#each options as option, i (i)}
-      <option value={option.value}>
-        {option.display}
-      </option>
-    {/each}
-  </select>
-</p>
+<label for={id}>{display}</label>
+<select bind:value={value} class="fw" id={id}>
+  {#each options as option, i (i)}
+    <option value={option.value}>
+      {option.display}
+    </option>
+  {/each}
+</select>
